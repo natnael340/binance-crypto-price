@@ -3,7 +3,7 @@ from flask_socketio import SocketIO, socketio
 import csv
 from apscheduler.schedulers.background import BackgroundScheduler
 from binance_api_rest import fetch_data, SYMBOLS
-from fetch_markt_cap_rest import SYMBOLS as MCSYMBOLS
+from fetch_markt_cap_rest import SYMBOLS as MCSYMBOLS, fetch_mc_data
 import threading
 
 app = Flask(__name__)
@@ -100,6 +100,7 @@ def handle_connect():
 
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=fetch_data, trigger='interval', seconds=3600)
+scheduler.add_job(func=fetch_mc_data, trigger='interval', seconds=3600)
 scheduler.start()
 
 if __name__ == '__main__':

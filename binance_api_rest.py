@@ -49,6 +49,7 @@ def write_to_csv(data_array):
     with open('candlestick_data.csv', 'a+', newline='') as csvfile:
         fieldnames = ['open_time', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'quote_asset_volume', 'number_of_trades', 'taker_buy_base_asset_volume', 'taker_buy_quote_asset_volume', 'ignore', 'symbol',]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        
         if csvfile.tell() == 0:
             writer.writeheader()
         for data in data_array:
@@ -58,6 +59,7 @@ def fetch_data():
     # Fetch the price data and write it to the CSV file
 
     data = get_price_data()
+    
     if data:
         write_to_csv(data)
 

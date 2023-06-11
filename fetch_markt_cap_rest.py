@@ -36,12 +36,10 @@ def write_to_csv(data):
             writer.writeheader()
             writer.writerow(data)
 
-def fetch_data():
+def fetch_mc_data():
     # Fetch the price data and write it to the CSV file
 
     data = get_price_data()
     if data:
         write_to_csv(data)
 
-
-fetch_data()
