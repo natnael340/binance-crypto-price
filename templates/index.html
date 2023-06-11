@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8" />
+    <title>Candlestick Chart</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.2/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/1.33.1/plotly.min.js"></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM"
+      crossorigin="anonymous"
+    />
+    <style>
+      #chart {
+        width: 100vw;
+        height: 100vh;
+      }
+      a: {
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar bg-body-tertiary">
+      <div class="container-fluid">
+        <span class="navbar-brand mb-0 h1">Crypto Price & Marketcap</span>
+        <div class="dropdown">
+          <a
+            class="btn btn-secondary dropdown-toggle"
+            href="#"
+            role="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            id="symbol"
+          >
+            {{symbol}}
+          </a>
+
+          <ul class="dropdown-menu z-3">
+            {% for symbol_item in symbols %}
+            <li>
+              <a class="dropdown-item" onclick="change_symbol(this)"
+                >{{symbol_item}}</a
+              >
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <div id="chart"></div>
+    <div id="mc_chart"></div>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      // Connect to the WebSocket endpoint
+      var socket = io.connect("ws://" + document.domain + ":" + location.port);
+      var chartData = {
+        x: [],
+        open: [],
+        high: [],
+        low: [],
+        close: [],
+        type: "candlestick",
+        name: "{{symbol}}",
+        increasing: {
+          line: {
+            color: "green",
+          },
+        },
+        decreasing: {
+          line: {
+            color: "red",
+          },
+        },
+      };
+
+      var piedata = [
+        {
+          values: Array.from({{ mc_symbols|tojson|safe }}).map(item => 0),
+
+          labels: {{ mc_symbols|tojson|safe }},
+
+          type: "pie",
+        },
+      ];
+      var pie_layout = {
+                      height: 400,
+                      width: 500
+                  };
+      var layout = {
+        title: "{{symbol}} Candlestick Chart",
+        xaxis: {
+          title: "Time",
+        },
+        yaxis: {
+          title: "Price",
+        },
+      };
+
+      var chart = document.getElementById("chart");
+      var mc_chart = document.getElementById("mc_chart");
+
+      Plotly.newPlot(chart, [chartData], layout, {
+        responsive: true,
+      });
+      Plotly.newPlot(mc_chart, piedata, pie_layout);
+
+      socket.on("connect", function () {
+        console.log("Connected to server");
+      });
+      socket.on("mc_data", function (data) {
+        console.log("mc_data: ", data);
+         piedata[0].values = piedata[0].labels.map(symb => data[symb])
+         Plotly.redraw(mc_chart);
+
+      })
+      socket.on("new_data", function (data) {
+        console.log("Received new data:", data);
+        // Update the chart with the new data
+        data.forEach((item) => {
+          chartData.x.push(item.open_time);
+          chartData.open.push(item.open);
+          chartData.high.push(item.high);
+          chartData.low.push(item.low);
+          chartData.close.push(item.close);
+        });
+        Plotly.redraw(chart);
+      });
+      socket.on("new_data", function (data) {
+        console.log("Received new data:", data);
+        // Update the chart with the new data
+        data.forEach((item) => {
+          chartData.x.push(item.open_time);
+          chartData.open.push(item.open);
+          chartData.high.push(item.high);
+          chartData.low.push(item.low);
+          chartData.close.push(item.close);
+        });
+        Plotly.redraw(chart);
+      });
+      socket.on("initial_data", function (data) {
+        console.log("Received initial data:", data);
+        // Create the chart with the initial data
+        data.forEach((item) => {
+          chartData.x.push(item.open_time);
+          chartData.open.push(item.open);
+          chartData.high.push(item.high);
+          chartData.low.push(item.low);
+          chartData.close.push(item.close);
+        });
+
+        Plotly.redraw(chart);
+      });
+
+      const change_symbol = (e) => {
+        fetch(
+          `http://${document.domain}:${location.port}/change_symbol?symbol=${e.innerText}`
+        ).then(() => window.location.reload());
+      };
+    </script>
+  </body>
+</html>
